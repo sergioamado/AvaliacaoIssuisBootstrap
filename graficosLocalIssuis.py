@@ -23,19 +23,39 @@ print("2 - Gráfico de Linhas (Tempo Médio de Resolução ao Longo do Tempo)")
 print("3 - Gráfico de Pizza (Proporção de Issues por Estado)")
 grafico_escolhido = int(input("Digite o número do gráfico desejado (1, 2 ou 3): "))
 
-# Perguntar ao usuário quais colunas usar para o gráfico
+# Perguntando ao usuário quais colunas usar para o gráfico
 colunas_disponiveis = df.columns
 print("\nColunas disponíveis para análise:")
 for i, coluna in enumerate(colunas_disponiveis, start=1):
     print(f"{i} - {coluna}")
 
-# Perguntando as colunas para o eixo X e Y
-coluna_x = int(input("\nEscolha a coluna para o eixo X (digite o número): ")) - 1
-coluna_y = int(input("Escolha a coluna para o eixo Y (digite o número): ")) - 1
+# Função para validar a entrada de eixo X (deve ser data ou numérico)
+def validar_coluna_x(coluna):
+    if pd.api.types.is_datetime64_any_dtype(df[coluna]) or pd.api.types.is_numeric_dtype(df[coluna]):
+        return True
+    else:
+        print(f"A coluna '{coluna}' não pode ser usada no eixo X. Ela deve ser do tipo data ou numérica.")
+        return False
 
-# Filtra as colunas que o usuário escolheu
-coluna_x = colunas_disponiveis[coluna_x]
-coluna_y = colunas_disponiveis[coluna_y]
+# Função para validar a entrada de eixo Y (deve ser numérica)
+def validar_coluna_y(coluna):
+    if pd.api.types.is_numeric_dtype(df[coluna]):
+        return True
+    else:
+        print(f"A coluna '{coluna}' não pode ser usada no eixo Y. Ela deve ser numérica.")
+        return False
+
+# Pergunta as colunas para o eixo X e Y
+while True:
+    coluna_x = int(input("\nEscolha a coluna para o eixo X (digite o número): ")) - 1
+    coluna_y = int(input("Escolha a coluna para o eixo Y (digite o número): ")) - 1
+    
+    coluna_x = colunas_disponiveis[coluna_x]
+    coluna_y = colunas_disponiveis[coluna_y]
+    
+    # Validação para as colunas X e Y
+    if validar_coluna_x(coluna_x) and validar_coluna_y(coluna_y):
+        break  # Se as colunas forem válidas, sai do loop
 
 # Geração do gráfico baseado na escolha do usuário
 if grafico_escolhido == 1:
@@ -50,17 +70,17 @@ if grafico_escolhido == 1:
 
 elif grafico_escolhido == 2:
     # Gráfico de Linhas: Tempo de Resolução ao Longo do Tempo
-    if pd.api.types.is_datetime64_any_dtype(df[coluna_x]):
-        df_grouped = df.groupby(df[coluna_x].dt.date)[coluna_y].mean().reset_index()
+    if pd.api.types.is_datetime64_any_dtype(df[coluna_x]) or pd.api.types.is_numeric_dtype(df[coluna_x]):
+        df_grouped = df.groupby(df[coluna_x])[coluna_y].mean().reset_index()
         plt.figure(figsize=(10, 6))
         sns.lineplot(data=df_grouped, x=coluna_x, y=coluna_y, marker='o', color='blue')
-        plt.title(f'{coluna_y} ao Longo do Tempo')
+        plt.title(f'{coluna_y} ao Longo do {coluna_x}')
         plt.xlabel(coluna_x)
         plt.ylabel(coluna_y)
         plt.xticks(rotation=45)
         plt.show()
     else:
-        print(f"A coluna '{coluna_x}' não é de data, não é possível gerar gráfico de linhas.")
+        print(f"A coluna '{coluna_x}' precisa ser de data ou numérica para gerar o gráfico de linhas.")
 
 elif grafico_escolhido == 3:
     # Gráfico de Pizza: Proporção de Issues por Estado
